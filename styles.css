@@ -18,6 +18,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 
 html, body {
   margin: 0;
@@ -357,8 +358,7 @@ html, body {
 }
 
 /* sealed bottle (shelf + detail) — paper rolled up near top */
-.bottle-svg.sealed .bottle-paper,
-.bottle-card .bottle-paper {
+.bottle-svg.sealed .bottle-paper {
   transform: scaleY(0.2) translateY(-22px);
   transform-origin: 40px 82px;
 }
