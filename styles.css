@@ -163,37 +163,49 @@ html, body {
 .bottle-card:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; border-radius: 8px; }
 
 .bottle-stage {
+  position: relative;
+  display: inline-block;
+  width: min(70vw, 280px);
   perspective: 900px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
   flex: 0 0 auto;
+}
+.bottle-stage.bottle-stage-large {
+  width: min(80vw, 360px);
 }
 
 .bottle-frame {
   display: block;
-  width: min(70vw, 280px);
+  width: 100%;
   aspect-ratio: 3 / 4;
-  height: auto;
   border: 0;
   background: transparent;
   filter: drop-shadow(0 18px 24px rgba(60, 40, 20, 0.18));
-  transform: rotateY(-15deg) rotate(-4deg);
-  transform-origin: center 55%;
-  animation: float 4.5s ease-in-out infinite;
+  border-radius: 16px;
   -webkit-user-select: none;
   user-select: none;
-  border-radius: 16px;
-  overflow: hidden;
 }
-.bottle-frame.bottle-frame-large {
-  width: min(80vw, 360px);
-}
-/* Lazy placeholder while iframe.src is unset */
 .bottle-frame:not([src]) {
   background:
     radial-gradient(ellipse at 50% 60%, rgba(232,241,238,0.6), rgba(200,220,214,0.35) 60%, transparent 70%);
+}
+
+/* Mask covers the Sketchfab UI band at the bottom of the iframe.
+   Same tilt + bob as the iframe so it stays glued to the iframe's bottom. */
+.bottle-mask {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 64px;
+  background: linear-gradient(to bottom, transparent 0%, var(--bg) 55%, var(--bg) 100%);
+  pointer-events: auto;
+}
+
+.bottle-stage > .bottle-frame,
+.bottle-stage > .bottle-mask {
+  transform: rotateY(-15deg) rotate(-4deg);
+  transform-origin: center 55%;
+  animation: float 4.5s ease-in-out infinite;
 }
 .bottle-card .card-title {
   margin: 0;
