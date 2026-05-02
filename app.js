@@ -6,6 +6,28 @@
 
   const STORAGE_KEY = 'bottle.state.v1';
   const TARGET = 100;
+  const SKETCHFAB_SRC =
+    'https://sketchfab.com/models/317ee8ebb8ef4bad8d239e544cce81d3/embed' +
+    '?autostart=1&ui_infos=0&ui_controls=0&ui_watermark=0&ui_help=0' +
+    '&ui_inspector=0&ui_stop=0&ui_annotations=0&ui_animations=0' +
+    '&ui_settings=0&ui_vr=0&ui_fullscreen=0&ui_general_controls=0' +
+    '&ui_loading=0&transparent=1&dnt=1';
+
+  const buildBottleEmbed = ({ lazy = false, large = false } = {}) => {
+    const iframe = document.createElement('iframe');
+    iframe.title = 'Message in a Bottle';
+    iframe.allow = 'autoplay; fullscreen; xr-spatial-tracking';
+    iframe.setAttribute('allowfullscreen', '');
+    iframe.setAttribute('mozallowfullscreen', 'true');
+    iframe.setAttribute('webkitallowfullscreen', 'true');
+    iframe.setAttribute('frameborder', '0');
+    iframe.setAttribute('execution-while-out-of-viewport', '');
+    iframe.setAttribute('execution-while-not-rendered', '');
+    iframe.className = 'bottle-frame' + (large ? ' bottle-frame-large' : '');
+    if (lazy) iframe.dataset.src = SKETCHFAB_SRC;
+    else iframe.src = SKETCHFAB_SRC;
+    return iframe;
+  };
 
   // ---------- Storage ----------
 
@@ -147,16 +169,28 @@
       empty.hidden = true;
       grid.hidden = false;
 
+      // Lazy-load Sketchfab iframes only when their slide is on/near screen.
+      const observer = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          if (!entry.isIntersecting) continue;
+          const iframe = entry.target;
+          if (iframe.dataset.src && !iframe.src) {
+            iframe.src = iframe.dataset.src;
+          }
+          observer.unobserve(iframe);
+        }
+      }, { root: grid, threshold: 0.4 });
+
       for (const b of all) {
-        grid.appendChild(buildBottleCard(b));
+        const card = buildBottleCard(b);
+        grid.appendChild(card);
+        const iframe = card.querySelector('iframe');
+        if (iframe) observer.observe(iframe);
       }
     }
 
     mount(root);
   };
-
-  const REST_ROT_Y = -15;
-  const REST_TILT = -4;
 
   const buildBottleCard = (b) => {
     const card = document.createElement('button');
@@ -170,15 +204,7 @@
 
     const stage = document.createElement('div');
     stage.className = 'bottle-stage';
-
-    const svgNS = 'http://www.w3.org/2000/svg';
-    const svg = document.createElementNS(svgNS, 'svg');
-    svg.setAttribute('viewBox', '0 0 80 120');
-    svg.setAttribute('class', 'bottle-svg' + (isSealed ? ' sealed' : ''));
-    const use = document.createElementNS(svgNS, 'use');
-    use.setAttribute('href', '#bottle-shape');
-    svg.appendChild(use);
-    stage.appendChild(svg);
+    stage.appendChild(buildBottleEmbed({ lazy: true }));
     card.appendChild(stage);
 
     const t = document.createElement('div');
@@ -193,53 +219,10 @@
       : `${b.completedCount}/${TARGET}`;
     card.appendChild(d);
 
-    // ----- Drag-to-rotate (per card) -----
-    let dragging = false;
-    let didDrag = false;
-    let startX = 0;
-    let startRotY = REST_ROT_Y;
-    let currentRotY = REST_ROT_Y;
-
-    const apply = (rotY) => {
-      svg.style.transform = `rotateY(${rotY}deg) rotate(${REST_TILT}deg)`;
-    };
-    apply(currentRotY);
-
-    svg.addEventListener('pointerdown', (e) => {
-      dragging = true;
-      didDrag = false;
-      startX = e.clientX;
-      startRotY = currentRotY;
-      svg.classList.add('dragging');
-      svg.setPointerCapture(e.pointerId);
-    });
-    svg.addEventListener('pointermove', (e) => {
-      if (!dragging) return;
-      const dx = e.clientX - startX;
-      if (Math.abs(dx) > 4) didDrag = true;
-      currentRotY = startRotY + dx * 0.6;
-      apply(currentRotY);
-    });
-    const endDrag = () => {
-      if (!dragging) return;
-      dragging = false;
-      svg.classList.remove('dragging');
-      // Spring back to rest on the next frame so the transition reapplies.
-      requestAnimationFrame(() => {
-        currentRotY = REST_ROT_Y;
-        apply(currentRotY);
-      });
-    };
-    svg.addEventListener('pointerup', endDrag);
-    svg.addEventListener('pointercancel', endDrag);
-
-    card.addEventListener('click', (e) => {
-      if (didDrag) {
-        didDrag = false;
-        e.preventDefault();
-        e.stopPropagation();
-        return;
-      }
+    // Clicks on the iframe stay inside its document and don't bubble out,
+    // so this fires only for the title, date, and surrounding card padding —
+    // exactly the affordance we want.
+    card.addEventListener('click', () => {
       if (isSealed) navigate(`/bottle/${b.id}`);
       else if (b.completedCount >= TARGET) navigate(`/seal/${b.id}`);
       else navigate(`/write/${b.id}`);
@@ -396,6 +379,7 @@
     root.appendChild(node);
 
     root.querySelector('[data-statement]').textContent = bottle.statement;
+    root.querySelector('[data-seal-bottle]').appendChild(buildBottleEmbed({ large: true }));
 
     const stage = root.querySelector('.seal-stage');
     const sealBtn = root.querySelector('[data-action="seal"]');
@@ -428,6 +412,7 @@
     root.appendChild(node);
 
     root.querySelector('[data-action="back-shelf"]').addEventListener('click', () => navigate('/'));
+    root.querySelector('[data-detail-bottle]').appendChild(buildBottleEmbed({ large: true }));
     root.querySelector('[data-title]').textContent = bottle.title?.trim() || '';
     root.querySelector('[data-statement]').textContent = bottle.statement;
     root.querySelector('[data-started]').textContent = formatDate(bottle.createdAt);
