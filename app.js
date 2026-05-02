@@ -146,7 +146,6 @@
     } else {
       empty.hidden = true;
       grid.hidden = false;
-      grid.classList.add('shelf-row');
 
       for (const b of all) {
         grid.appendChild(buildBottleCard(b));
@@ -155,6 +154,9 @@
 
     mount(root);
   };
+
+  const REST_ROT_Y = -15;
+  const REST_TILT = -4;
 
   const buildBottleCard = (b) => {
     const card = document.createElement('button');
@@ -166,6 +168,9 @@
       isSealed ? `Sealed bottle: ${title}` : `Continue writing: ${title} (${b.completedCount}/${TARGET})`
     );
 
+    const stage = document.createElement('div');
+    stage.className = 'bottle-stage';
+
     const svgNS = 'http://www.w3.org/2000/svg';
     const svg = document.createElementNS(svgNS, 'svg');
     svg.setAttribute('viewBox', '0 0 80 120');
@@ -173,7 +178,8 @@
     const use = document.createElementNS(svgNS, 'use');
     use.setAttribute('href', '#bottle-shape');
     svg.appendChild(use);
-    card.appendChild(svg);
+    stage.appendChild(svg);
+    card.appendChild(stage);
 
     const t = document.createElement('div');
     t.className = 'card-title';
@@ -187,7 +193,53 @@
       : `${b.completedCount}/${TARGET}`;
     card.appendChild(d);
 
-    card.addEventListener('click', () => {
+    // ----- Drag-to-rotate (per card) -----
+    let dragging = false;
+    let didDrag = false;
+    let startX = 0;
+    let startRotY = REST_ROT_Y;
+    let currentRotY = REST_ROT_Y;
+
+    const apply = (rotY) => {
+      svg.style.transform = `rotateY(${rotY}deg) rotate(${REST_TILT}deg)`;
+    };
+    apply(currentRotY);
+
+    svg.addEventListener('pointerdown', (e) => {
+      dragging = true;
+      didDrag = false;
+      startX = e.clientX;
+      startRotY = currentRotY;
+      svg.classList.add('dragging');
+      svg.setPointerCapture(e.pointerId);
+    });
+    svg.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      const dx = e.clientX - startX;
+      if (Math.abs(dx) > 4) didDrag = true;
+      currentRotY = startRotY + dx * 0.6;
+      apply(currentRotY);
+    });
+    const endDrag = () => {
+      if (!dragging) return;
+      dragging = false;
+      svg.classList.remove('dragging');
+      // Spring back to rest on the next frame so the transition reapplies.
+      requestAnimationFrame(() => {
+        currentRotY = REST_ROT_Y;
+        apply(currentRotY);
+      });
+    };
+    svg.addEventListener('pointerup', endDrag);
+    svg.addEventListener('pointercancel', endDrag);
+
+    card.addEventListener('click', (e) => {
+      if (didDrag) {
+        didDrag = false;
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
       if (isSealed) navigate(`/bottle/${b.id}`);
       else if (b.completedCount >= TARGET) navigate(`/seal/${b.id}`);
       else navigate(`/write/${b.id}`);
