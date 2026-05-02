@@ -13,7 +13,7 @@
     '&ui_settings=0&ui_vr=0&ui_fullscreen=0&ui_general_controls=0' +
     '&ui_loading=0&transparent=1&dnt=1';
 
-  const buildBottleEmbed = ({ lazy = false, large = false } = {}) => {
+  const buildBottleEmbed = ({ lazy = false } = {}) => {
     const iframe = document.createElement('iframe');
     iframe.title = 'Message in a Bottle';
     iframe.allow = 'autoplay; fullscreen; xr-spatial-tracking';
@@ -23,10 +23,23 @@
     iframe.setAttribute('frameborder', '0');
     iframe.setAttribute('execution-while-out-of-viewport', '');
     iframe.setAttribute('execution-while-not-rendered', '');
-    iframe.className = 'bottle-frame' + (large ? ' bottle-frame-large' : '');
+    iframe.className = 'bottle-frame';
     if (lazy) iframe.dataset.src = SKETCHFAB_SRC;
     else iframe.src = SKETCHFAB_SRC;
     return iframe;
+  };
+
+  // Stage = perspective wrapper holding the iframe + a bottom mask that hides
+  // the Sketchfab UI overlay (free-tier watermark). The mask carries the same
+  // tilt + bob so it stays aligned with the iframe bottom.
+  const buildBottleStage = ({ lazy = false, large = false } = {}) => {
+    const stage = document.createElement('div');
+    stage.className = 'bottle-stage' + (large ? ' bottle-stage-large' : '');
+    stage.appendChild(buildBottleEmbed({ lazy }));
+    const mask = document.createElement('div');
+    mask.className = 'bottle-mask';
+    stage.appendChild(mask);
+    return stage;
   };
 
   // ---------- Storage ----------
@@ -202,10 +215,7 @@
       isSealed ? `Sealed bottle: ${title}` : `Continue writing: ${title} (${b.completedCount}/${TARGET})`
     );
 
-    const stage = document.createElement('div');
-    stage.className = 'bottle-stage';
-    stage.appendChild(buildBottleEmbed({ lazy: true }));
-    card.appendChild(stage);
+    card.appendChild(buildBottleStage({ lazy: true }));
 
     const t = document.createElement('div');
     t.className = 'card-title';
@@ -379,7 +389,7 @@
     root.appendChild(node);
 
     root.querySelector('[data-statement]').textContent = bottle.statement;
-    root.querySelector('[data-seal-bottle]').appendChild(buildBottleEmbed({ large: true }));
+    root.querySelector('[data-seal-bottle]').appendChild(buildBottleStage({ large: true }));
 
     const stage = root.querySelector('.seal-stage');
     const sealBtn = root.querySelector('[data-action="seal"]');
@@ -412,7 +422,7 @@
     root.appendChild(node);
 
     root.querySelector('[data-action="back-shelf"]').addEventListener('click', () => navigate('/'));
-    root.querySelector('[data-detail-bottle]').appendChild(buildBottleEmbed({ large: true }));
+    root.querySelector('[data-detail-bottle]').appendChild(buildBottleStage({ large: true }));
     root.querySelector('[data-title]').textContent = bottle.title?.trim() || '';
     root.querySelector('[data-statement]').textContent = bottle.statement;
     root.querySelector('[data-started]').textContent = formatDate(bottle.createdAt);
