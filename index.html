@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Bottle</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main id="app" class="app"></main>
+
+  <!-- ===== Templates ===== -->
+
+  <template id="tpl-shelf">
+    <header class="topbar">
+      <h1 class="brand">Bottle</h1>
+      <button class="btn btn-ghost" data-action="new-bottle" aria-label="Start a new bottle">+ New</button>
+    </header>
+
+    <section class="shelf-section">
+      <div class="shelf-empty" data-empty hidden>
+        <div class="empty-illustration">
+          <svg viewBox="0 0 80 120" class="bottle-svg" aria-hidden="true">
+            <use href="#bottle-shape"/>
+          </svg>
+        </div>
+        <h2>Your shelf is empty</h2>
+        <p>Write a statement 100 times and seal your first bottle.</p>
+        <button class="btn btn-primary" data-action="new-bottle">Start a bottle</button>
+      </div>
+
+      <div class="shelf-grid" data-grid hidden></div>
+    </section>
+
+    <!-- Hidden SVG defs -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <defs>
+        <symbol id="bottle-shape" viewBox="0 0 80 120">
+          <!-- cork -->
+          <rect x="32" y="6" width="16" height="12" rx="2" fill="#b58863" />
+          <rect x="32" y="6" width="16" height="3" rx="1" fill="#8a6444" />
+          <!-- neck -->
+          <rect x="33" y="18" width="14" height="18" fill="url(#glassGrad)" stroke="#cfe3df" stroke-width="0.6"/>
+          <!-- body -->
+          <path d="M22 44 Q22 36 33 36 L47 36 Q58 36 58 44 L58 108 Q58 116 50 116 L30 116 Q22 116 22 108 Z"
+                fill="url(#glassGrad)" stroke="#cfe3df" stroke-width="0.8"/>
+          <!-- highlight -->
+          <path d="M27 50 Q26 70 28 100" stroke="rgba(255,255,255,0.6)" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+          <!-- paper inside -->
+          <rect class="bottle-paper" x="30" y="60" width="20" height="44" rx="2" fill="#f4ecd8" opacity="0.85"/>
+        </symbol>
+        <linearGradient id="glassGrad" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0%" stop-color="#e8f1ee" stop-opacity="0.85"/>
+          <stop offset="100%" stop-color="#c8dcd6" stop-opacity="0.65"/>
+        </linearGradient>
+      </defs>
+    </svg>
+  </template>
+
+  <template id="tpl-create">
+    <header class="topbar">
+      <button class="btn btn-ghost" data-action="back" aria-label="Back">← Back</button>
+      <h1 class="brand brand-small">New bottle</h1>
+      <span class="topbar-spacer"></span>
+    </header>
+
+    <section class="centered">
+      <form class="create-form" data-create-form>
+        <label class="field">
+          <span class="field-label">Title <span class="muted">(optional)</span></span>
+          <input class="input" name="title" maxlength="60" placeholder="e.g. Discipline" autocomplete="off" />
+        </label>
+
+        <label class="field">
+          <span class="field-label">Statement</span>
+          <textarea class="input input-textarea" name="statement" rows="3" required maxlength="200"
+            placeholder="I am someone who keeps promises to myself."></textarea>
+          <span class="field-hint">Keep it short. You'll write this 100 times.</span>
+        </label>
+
+        <button class="btn btn-primary" type="submit">Start writing</button>
+      </form>
+    </section>
+  </template>
+
+  <template id="tpl-write">
+    <header class="topbar">
+      <button class="btn btn-ghost" data-action="back-shelf" aria-label="Back to shelf">← Shelf</button>
+      <h1 class="brand brand-small" data-bottle-title></h1>
+      <span class="topbar-spacer"></span>
+    </header>
+
+    <section class="write">
+      <p class="statement" data-statement></p>
+
+      <div class="progress">
+        <div class="progress-meta">
+          <span data-counter>0 / 100</span>
+          <span class="muted" data-microcopy></span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" data-fill></div></div>
+      </div>
+
+      <form class="write-form" data-write-form autocomplete="off">
+        <label class="visually-hidden" for="entry-input">Write the statement</label>
+        <input id="entry-input" class="input input-large" data-entry-input
+          autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+        <div class="write-actions">
+          <span class="write-error" data-error aria-live="polite"></span>
+          <button class="btn btn-primary" type="submit">Add line</button>
+        </div>
+      </form>
+    </section>
+  </template>
+
+  <template id="tpl-complete">
+    <header class="topbar">
+      <span class="topbar-spacer"></span>
+      <h1 class="brand brand-small">Ready</h1>
+      <span class="topbar-spacer"></span>
+    </header>
+
+    <section class="centered seal-stage">
+      <div class="seal-bottle" data-seal-bottle>
+        <svg viewBox="0 0 80 120" class="bottle-svg bottle-large" aria-hidden="true">
+          <use href="#bottle-shape"/>
+        </svg>
+      </div>
+      <h2 class="seal-headline">100 times written. Ready to seal.</h2>
+      <p class="muted" data-statement></p>
+      <button class="btn btn-primary btn-large" data-action="seal">Seal bottle</button>
+    </section>
+  </template>
+
+  <template id="tpl-detail">
+    <header class="topbar">
+      <button class="btn btn-ghost" data-action="back-shelf" aria-label="Back to shelf">← Shelf</button>
+      <h1 class="brand brand-small">Sealed</h1>
+      <span class="topbar-spacer"></span>
+    </header>
+
+    <section class="centered detail">
+      <div class="detail-bottle">
+        <svg viewBox="0 0 80 120" class="bottle-svg bottle-large sealed" aria-hidden="true">
+          <use href="#bottle-shape"/>
+        </svg>
+      </div>
+      <h2 class="detail-title" data-title></h2>
+      <p class="detail-statement" data-statement></p>
+      <dl class="detail-meta">
+        <div><dt>Started</dt><dd data-started></dd></div>
+        <div><dt>Sealed</dt><dd data-sealed></dd></div>
+        <div><dt>Repetitions</dt><dd data-count></dd></div>
+      </dl>
+      <p class="muted small">Sealed after 100 repetitions.</p>
+    </section>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
