@@ -171,23 +171,29 @@ html, body {
   flex: 0 0 auto;
 }
 
-.bottle-card .bottle-svg {
-  width: min(55vw, 200px);
+.bottle-frame {
+  display: block;
+  width: min(70vw, 280px);
+  aspect-ratio: 3 / 4;
   height: auto;
+  border: 0;
+  background: transparent;
   filter: drop-shadow(0 18px 24px rgba(60, 40, 20, 0.18));
   transform: rotateY(-15deg) rotate(-4deg);
   transform-origin: center 55%;
-  transition: transform 700ms cubic-bezier(.2,.7,.2,1);
   animation: float 4.5s ease-in-out infinite;
-  touch-action: none;
-  cursor: grab;
   -webkit-user-select: none;
   user-select: none;
-  -webkit-touch-callout: none;
+  border-radius: 16px;
+  overflow: hidden;
 }
-.bottle-card .bottle-svg.dragging {
-  cursor: grabbing;
-  transition: none;
+.bottle-frame.bottle-frame-large {
+  width: min(80vw, 360px);
+}
+/* Lazy placeholder while iframe.src is unset */
+.bottle-frame:not([src]) {
+  background:
+    radial-gradient(ellipse at 50% 60%, rgba(232,241,238,0.6), rgba(200,220,214,0.35) 60%, transparent 70%);
 }
 .bottle-card .card-title {
   margin: 0;
@@ -353,28 +359,20 @@ html, body {
   margin: 0;
 }
 
-/* sealing animation */
-.seal-stage.sealing .bottle-paper {
-  animation: rollPaper 900ms cubic-bezier(.2,.7,.2,1) forwards;
-  transform-origin: 40px 82px;
+/* sealing animation — brief pulse on the 3D bottle */
+.seal-stage.sealing .bottle-frame {
+  animation: sealPulse 800ms ease-out forwards;
 }
-.seal-stage.sealing .bottle-svg { animation: bottleNudge 900ms ease-in-out forwards; }
-
-@keyframes rollPaper {
-  0%   { transform: scaleY(1) translateY(0); }
-  60%  { transform: scaleY(0.4) translateY(-14px); }
-  100% { transform: scaleY(0.2) translateY(-22px); }
-}
-@keyframes bottleNudge {
-  0%   { transform: translateY(0); }
-  50%  { transform: translateY(-4px); }
-  100% { transform: translateY(0); }
-}
-
-/* sealed bottle (shelf + detail) — paper rolled up near top */
-.bottle-svg.sealed .bottle-paper {
-  transform: scaleY(0.2) translateY(-22px);
-  transform-origin: 40px 82px;
+@keyframes sealPulse {
+  0%   { transform: rotateY(-15deg) rotate(-4deg) scale(1); }
+  55%  {
+    transform: rotateY(-15deg) rotate(-4deg) scale(1.05);
+    filter: brightness(1.1) drop-shadow(0 24px 32px rgba(60,40,20,0.24));
+  }
+  100% {
+    transform: rotateY(-15deg) rotate(-4deg) scale(1);
+    filter: drop-shadow(0 18px 24px rgba(60,40,20,0.18));
+  }
 }
 
 /* ===== Detail ===== */
